@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>이명 치료 사운드 3CH</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    background: #0a0a18;
+    color: #e0e0f0;
+    min-height: 100vh;
+    padding: 14px 14px 50px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  .header { text-align: center; padding: 14px 0 18px; }
+  .header h1 { font-size: 1.25em; color: #c4b5fd; margin-bottom: 4px; }
+  .header p { font-size: 0.73em; color: #555; }
+
+  /* 팁 배너 */
+  .tip-banner {
+    background: #1a1200;
+    border: 1px solid #3a2800;
+    border-radius: 12px;
+    padding: 11px 14px;
+    font-size: 0.78em;
+    color: #fbbf24;
+    margin-bottom: 14px;
+    line-height: 1.6;
+  }
+
+  /* 타이머 */
+  .timer-box {
+    background: #12122a;
+    border-radius: 18px;
+    padding: 16px;
+    text-align: center;
+    margin-bottom: 14px;
+    border: 1px solid #2a2a50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .timer-display { font-size: 2.2em; font-weight: 300; color: #c4b5fd; letter-spacing: 3px; }
+  .timer-right { text-align: right; }
+  .timer-label { font-size: 0.7em; color: #555; margin-bottom: 6px; }
+  .timer-btns { display: flex; gap: 5px; justify-content: flex-end; flex-wrap: wrap; }
+  .t-btn {
+    padding: 5px 10px;
+    border-radius: 12px;
+    border: 1px solid #3a3a5a;
+    background: #1a1a3a;
+    color: #888;
+    font-size: 0.72em;
+    cursor: pointer;
+  }
+  .t-btn.active { background: #4c1d95; color: white; border-color: #7c3aed; }
+
+  /* 채널 카드 */
+  .channel {
+    border-radius: 18px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border: 1px solid;
+  }
+  .ch1 { background: #130d24; border-color: #3b1f6a; }
+  .ch2 { background: #0d1a24; border-color: #0c3a5a; }
+  .ch3 { background: #0d1f14; border-color: #0c3a1f; }
+
+  .ch-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .ch-left { display: flex; align-items: center; gap: 9px; }
+  .ch-num {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8em; font-weight: bold;
+  }
+  .num1 { background: #7c3aed; }
+  .num2 { background: #0ea5e9; }
+  .num3 { background: #10b981; }
+  .ch-name { font-size: 0.88em; font-weight: bold; }
+  .ch-status { font-size: 0.7em; color: #555; margin-top: 1px; }
+
+  /* 토글 스위치 */
+  .ch-toggle {
+    width: 50px; height: 26px;
+    border-radius: 13px;
+    border: none;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.3s;
+    background: #2a2a4a;
+  }
+  .ch-toggle.on1 { background: #7c3aed; }
+  .ch-toggle.on2 { background: #0ea5e9; }
+  .ch-toggle.on3 { background: #10b981; }
+  .ch-toggle::after {
+    content: '';
+    position: absolute;
+    width: 20px; height: 20px;
+    background: white;
+    border-radius: 50%;
+    top: 3px; left: 3px;
+    transition: left 0.3s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+  .ch-toggle.on1::after,
+  .ch-toggle.on2::after,
+  .ch-toggle.on3::after { left: 27px; }
+
+  /* 주파수 */
+  .freq-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .freq-val { font-size: 1.9em; font-weight: bold; }
+  .fv1 { color: #a78bfa; }
+  .fv2 { color: #38bdf8; }
+  .fv3 { color: #34d399; }
+
+  /* 양쪽귀 감지 버튼 */
+  .detect-btn {
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px dashed;
+    background: transparent;
+    font-size: 0.72em;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .db1 { border-color: #7c3aed; color: #a78bfa; }
+  .db1.hit { background: #7c3aed; color: white; border-style: solid; }
+  .db2 { border-color: #0ea5e9; color: #38bdf8; }
+  .db2.hit { background: #0ea5e9; color: white; border-style: solid; }
+  .db3 { border-color: #10b981; color: #34d399; }
+  .db3.hit { background: #10b981; color: white; border-style: solid; }
+
+  input[type=range] {
+    width: 100%;
+    height: 7px;
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 4px 0;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  }
+  .fs1 { background: linear-gradient(to right, #4c1d95, #c4b5fd); }
+  .fs1::-webkit-slider-thumb { background: #7c3aed; }
+  .fs2 { background: linear-gradient(to right, #075985, #7dd3fc); }
+  .fs2::-webkit-slider-thumb { background: #0ea5e9; }
+  .fs3 { background: linear-gradient(to right, #064e3b, #6ee7b7); }
+  .fs3::-webkit-slider-thumb { background: #10b981; }
+  .vs1 { background: linear-gradient(to right, #3b0764, #7c3aed); }
+  .vs1::-webkit-slider-thumb { background: #6d28d9; }
+  .vs2 { background: linear-gradient(to right, #0c4a6e, #0ea5e9); }
+  .vs2::-webkit-slider-thumb { background: #0284c7; }
+  .vs3 { background: linear-gradient(to right, #022c22, #10b981); }
+  .vs3::-webkit-slider-thumb { background: #059669; }
+
+  .range-labels { display: flex; justify-content: space-between; font-size: 0.68em; color: #444; margin-bottom: 6px; }
+  .vol-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+  .vol-icon { font-size: 0.9em; }
+  .vol-pct { font-size: 0.78em; color: #aaa; width: 34px; text-align: right; }
+
+  /* 파형 */
+  .wave-container { height: 36px; display: flex; align-items: center; justify-content: center; gap: 3px; margin: 8px 0; }
+  .wb { width: 4px; border-radius: 2px; height: 4px; opacity: 0.25; transition: height 0.08s; }
+
+  /* 전체 제어 */
+  .main-ctrl { margin-bottom: 12px; }
+  .btn-all {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #7c3aed, #0ea5e9, #10b981);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.2s;
+  }
+  .btn-all.playing { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+  .btn-stop {
+    width: 100%;
+    padding: 12px;
+    background: #1a1a2e;
+    color: #888;
+    border: 1px solid #3a3a5a;
+    border-radius: 14px;
+    font-size: 0.9em;
+    cursor: pointer;
+  }
+
+  /* 저장 */
+  .save-btn {
+    width: 100%;
+    padding: 14px;
+    background: #0a2a1a;
+    color: #4ade80;
+    border: 1px solid #166534;
+    border-radius: 14px;
+    font-size: 0.9em;
+    font-weight: bold;
+    cursor: pointer;
+    margin-bottom: 12px;
+  }
+
+  /* 기록 */
+  .log-box {
+    background: #0f1a0f;
+    border-radius: 16px;
+    padding: 14px;
+    border: 1px solid #1a3a1a;
+  }
+  .log-title {
+    font-size: 0.8em; color: #4ade80;
+    margin-bottom: 10px;
+    display: flex; justify-content: space-between;
+  }
+  .log-clear { background: none; border: none; color: #ef4444; font-size: 0.78em; cursor: pointer; }
+  .log-item {
+    background: #0a1a0a;
+    border-radius: 10px;
+    padding: 9px 11px;
+    margin-bottom: 6px;
+    font-size: 0.78em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .log-freqs { display: flex; gap: 8px; flex-wrap: wrap; }
+  .log-time { color: #444; font-size: 0.85em; }
+
+  /* 양쪽귀 감지 안내 */
+  .detect-info {
+    background: #0a1a2a;
+    border: 1px solid #1a3a5a;
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 0.78em;
+    color: #7dd3fc;
+    margin-bottom: 12px;
+    line-height: 1.7;
+  }
+  .detect-info strong { color: #38bdf8; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🎧 이명 치료 사운드 3CH</h1>
+  <p>헤드폰 착용 · 조용한 곳 · 볼륨 낮게 시작</p>
+</div>
+
+<!-- 핵심 팁 -->
+<div class="detect-info">
+  <strong>💡 양쪽 귀 동시 감지법</strong><br>
+  슬라이더를 천천히 움직이다가<br>
+  <strong>갑자기 양쪽 귀에서 동시에 들리는 순간</strong> → 그게 이명 주파수!<br>
+  그 순간 "✅ 이 주파수 맞아!" 버튼을 눌러 저장하세요.
+</div>
+
+<!-- 타이머 -->
+<div class="timer-box">
+  <div>
+    <div style="font-size:0.7em;color:#555;margin-bottom:4px;">치료 시간</div>
+    <div class="timer-display" id="timer-display">00:00</div>
+  </div>
+  <div class="timer-right">
+    <div class="timer-label">타이머 설정</div>
+    <div class="timer-btns">
+      <button class="t-btn" onclick="setTimer(10,this)">10분</button>
+      <button class="t-btn active" onclick="setTimer(30,this)">30분</button>
+      <button class="t-btn" onclick="setTimer(60,this)">1시간</button>
+      <button class="t-btn" onclick="setTimer(0,this)">∞</button>
+    </div>
+  </div>
+</div>
+
+<!-- 채널 1 -->
+<div class="channel ch1">
+  <div class="ch-header">
+    <div class="ch-left">
+      <div class="ch-num num1">1</div>
+      <div>
+        <div class="ch-name">채널 ①</div>
+        <div class="ch-status" id="status1">정지 중</div>
+      </div>
+    </div>
+    <button class="ch-toggle" id="toggle1" onclick="toggleCh(1)"></button>
+  </div>
+  <div class="freq-row">
+    <div class="freq-val fv1" id="fval1">6,000 Hz</div>
+    <button class="detect-btn db1" id="detect1" onclick="markDetected(1)">✅ 이 주파수 맞아!</button>
+  </div>
+  <div class="range-labels"><span>4,000</span><span>9,000</span><span>14,000 Hz</span></div>
+  <input type="range" id="freq1" class="fs1" min="4000" max="14000" value="6000" step="50" oninput="updateFreq(1)">
+  <div class="wave-container" id="wave1"></div>
+  <div class="vol-row">
+    <span class="vol-icon">🔈</span>
+    <input type="range" id="vol1" class="vs1" min="1" max="100" value="20" step="1" oninput="updateVol(1)">
+    <span class="vol-icon">🔊</span>
+    <span class="vol-pct" id="vpct1">20%</span>
+  </div>
+</div>
+
+<!-- 채널 2 -->
+<div class="channel ch2">
+  <div class="ch-header">
+    <div class="ch-left">
+      <div class="ch-num num2">2</div>
+      <div>
+        <div class="ch-name">채널 ②</div>
+        <div class="ch-status" id="status2">정지 중</div>
+      </div>
+    </div>
+    <button class="ch-toggle" id="toggle2" onclick="toggleCh(2)"></button>
+  </div>
+  <div class="freq-row">
+    <div class="freq-val fv2" id="fval2">7,500 Hz</div>
+    <button class="detect-btn db2" id="detect2" onclick="markDetected(2)">✅ 이 주파수 맞아!</button>
+  </div>
+  <div class="range-labels"><span>4,000</span><span>9,000</span><span>14,000 Hz</span></div>
+  <input type="range" id="freq2" class="fs2" min="4000" max="14000" value="7500" step="50" oninput="updateFreq(2)">
+  <div class="wave-container" id="wave2"></div>
+  <div class="vol-row">
+    <span class="vol-icon">🔈</span>
+    <input type="range" id="vol2" class="vs2" min="1" max="100" value="20" step="1" oninput="updateVol(2)">
+    <span class="vol-icon">🔊</span>
+    <span class="vol-pct" id="vpct2">20%</span>
+  </div>
+</div>
+
+<!-- 채널 3 -->
+<div class="channel ch3">
+  <div class="ch-header">
+    <div class="ch-left">
+      <div class="ch-num num3">3</div>
+      <div>
+        <div class="ch-name">채널 ③</div>
+        <div class="ch-status" id="status3">정지 중</div>
+      </div>
+    </div>
+    <button class="ch-toggle" id="toggle3" onclick="toggleCh(3)"></button>
+  </div>
+  <div class="freq-row">
+    <div class="freq-val fv3" id="fval3">9,000 Hz</div>
+    <button class="detect-btn db3" id="detect3" onclick="markDetected(3)">✅ 이 주파수 맞아!</button>
+  </div>
+  <div class="range-labels"><span>4,000</span><span>9,000</span><span>14,000 Hz</span></div>
+  <input type="range" id="freq3" class="fs3" min="4000" max="14000" value="9000" step="50" oninput="updateFreq(3)">
+  <div class="wave-container" id="wave3"></div>
+  <div class="vol-row">
+    <span class="vol-icon">🔈</span>
+    <input type="range" id="vol3" class="vs3" min="1" max="100" value="20" step="1" oninput="updateVol(3)">
+    <span class="vol-icon">🔊</span>
+    <span class="vol-pct" id="vpct3">20%</span>
+  </div>
+</div>
+
+<!-- 전체 제어 -->
+<div class="main-ctrl">
+  <button class="btn-all" id="btn-all" onclick="toggleAll()">
+    <span id="btn-icon">▶</span>
+    <span id="btn-txt">3채널 전체 재생</span>
+  </button>
+  <button class="btn-stop" onclick="stopAll()">⏹ 전체 정지</button>
+</div>
+
+<!-- 저장 -->
+<button class="save-btn" onclick="saveLog()">💾 현재 설정 저장 (찾은 주파수 기록)</button>
+
+<!-- 기록 -->
+<div class="log-box">
+  <div class="log-title">
+    <span>📋 저장 기록</span>
+    <button class="log-clear" onclick="clearLog()">전체삭제</button>
+  </div>
+  <div id="log-list"><div style="color:#444;font-size:0.8em;text-align:center;padding:8px">저장된 기록 없음</div></div>
+</div>
+
+<script>
+  const COLORS = { 1: '#a78bfa', 2: '#38bdf8', 3: '#34d399' };
+  const ON_CLASS = { 1: 'on1', 2: 'on2', 3: 'on3' };
+
+  let audioCtx = null;
+  let nodes = {};
+  for (let i = 1; i <= 3; i++) nodes[i] = { osc: null, gain: null, playing: false };
+  let waveTimers = {};
+  let timerInterval = null;
+  let timerSec = 0;
+  let timerTarget = 30 * 60;
+  let timerRunning = false;
+  let logs = [];
+  let detected = {};
+
+  // 파형 초기화
+  function initWaves() {
+    for (let ch = 1; ch <= 3; ch++) {
+      const c = document.getElementById('wave' + ch);
+      c.innerHTML = '';
+      for (let i = 0; i < 18; i++) {
+        const b = document.createElement('div');
+        b.className = 'wb';
+        b.style.background = COLORS[ch];
+        c.appendChild(b);
+      }
+    }
+  }
+
+  function animateWave(ch, on) {
+    clearInterval(waveTimers[ch]);
+    const bars = document.getElementById('wave' + ch).children;
+    if (!on) {
+      Array.from(bars).forEach(b => { b.style.height = '4px'; b.style.opacity = '0.2'; });
+      return;
+    }
+    waveTimers[ch] = setInterval(() => {
+      Array.from(bars).forEach(b => {
+        b.style.height = (Math.random() * 28 + 4) + 'px';
+        b.style.opacity = '0.85';
+      });
+    }, 90);
+  }
+
+  function getCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+
+  function startTone(ch) {
+    const ctx = getCtx();
+    if (nodes[ch].osc) { try { nodes[ch].osc.stop(); } catch(e){} nodes[ch].osc = null; }
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = parseInt(document.getElementById('freq' + ch).value);
+    gain.gain.value = parseInt(document.getElementById('vol' + ch).value) / 100 * 0.22;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    nodes[ch].osc = osc;
+    nodes[ch].gain = gain;
+    nodes[ch].playing = true;
+  }
+
+  function stopTone(ch) {
+    if (nodes[ch].osc) { try { nodes[ch].osc.stop(); } catch(e){} nodes[ch].osc = null; }
+    nodes[ch].playing = false;
+  }
+
+  function toggleCh(ch) {
+    if (nodes[ch].playing) {
+      stopTone(ch);
+      document.getElementById('toggle' + ch).className = 'ch-toggle';
+      document.getElementById('status' + ch).textContent = '정지 중';
+      animateWave(ch, false);
+    } else {
+      startTone(ch);
+      document.getElementById('toggle' + ch).className = 'ch-toggle ' + ON_CLASS[ch];
+      document.getElementById('status' + ch).textContent = '재생 중 ●';
+      animateWave(ch, true);
+      startTimerIfNeeded();
+    }
+    updateAllBtn();
+  }
+
+  function toggleAll() {
+    const anyOn = [1,2,3].some(ch => nodes[ch].playing);
+    if (anyOn) { stopAll(); return; }
+    for (let ch = 1; ch <= 3; ch++) {
+      startTone(ch);
+      document.getElementById('toggle' + ch).className = 'ch-toggle ' + ON_CLASS[ch];
+      document.getElementById('status' + ch).textContent = '재생 중 ●';
+      animateWave(ch, true);
+    }
+    startTimerIfNeeded();
+    updateAllBtn();
+  }
+
+  function stopAll() {
+    for (let ch = 1; ch <= 3; ch++) {
+      stopTone(ch);
+      document.getElementById('toggle' + ch).className = 'ch-toggle';
+      document.getElementById('status' + ch).textContent = '정지 중';
+      animateWave(ch, false);
+    }
+    stopTimer();
+    updateAllBtn();
+  }
+
+  function updateAllBtn() {
+    const anyOn = [1,2,3].some(ch => nodes[ch].playing);
+    const btn = document.getElementById('btn-all');
+    document.getElementById('btn-icon').textContent = anyOn ? '⏹' : '▶';
+    document.getElementById('btn-txt').textContent = anyOn ? '재생 중 (탭하여 정지)' : '3채널 전체 재생';
+    anyOn ? btn.classList.add('playing') : btn.classList.remove('playing');
+  }
+
+  function updateFreq(ch) {
+    const val = parseInt(document.getElementById('freq' + ch).value);
+    document.getElementById('fval' + ch).textContent = val.toLocaleString() + ' Hz';
+    if (nodes[ch].osc) nodes[ch].osc.frequency.value = val;
+    // 감지 버튼 초기화
+    document.getElementById('detect' + ch).classList.remove('hit');
+    detected[ch] = false;
+  }
+
+  function updateVol(ch) {
+    const val = parseInt(document.getElementById('vol' + ch).value);
+    document.getElementById('vpct' + ch).textContent = val + '%';
+    if (nodes[ch].gain) nodes[ch].gain.gain.value = val / 100 * 0.22;
+  }
+
+  function markDetected(ch) {
+    const btn = document.getElementById('detect' + ch);
+    detected[ch] = !detected[ch];
+    detected[ch] ? btn.classList.add('hit') : btn.classList.remove('hit');
+    if (detected[ch]) {
+      const freq = parseInt(document.getElementById('freq' + ch).value);
+      // 진동 피드백 (지원 기기)
+      if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
+      btn.textContent = '🎯 ' + freq.toLocaleString() + 'Hz 저장됨!';
+      setTimeout(() => { btn.textContent = '✅ 이 주파수 맞아!'; }, 2000);
+    }
+  }
+
+  // 타이머
+  function setTimer(min, el) {
+    document.querySelectorAll('.t-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    timerTarget = min * 60;
+    timerSec = 0;
+    updateTimerDisplay();
+    if (timerRunning) { clearInterval(timerInterval); timerRunning = false; }
+    if ([1,2,3].some(ch => nodes[ch].playing)) startTimerIfNeeded();
+  }
+
+  function startTimerIfNeeded() {
+    if (timerRunning) return;
+    timerRunning = true;
+    timerInterval = setInterval(() => {
+      timerSec++;
+      updateTimerDisplay();
+      if (timerTarget > 0 && timerSec >= timerTarget) {
+        stopAll();
+        clearInterval(timerInterval);
+        timerRunning = false;
+        if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+        alert('⏱ 치료 시간 완료!\n수고하셨습니다 😊');
+      }
+    }, 1000);
+  }
+
+  function stopTimer() {
+    clearInterval(timerInterval);
+    timerRunning = false;
+    timerSec = 0;
+    updateTimerDisplay();
+  }
+
+  function updateTimerDisplay() {
+    const m = String(Math.floor(timerSec / 60)).padStart(2, '0');
+    const s = String(timerSec % 60).padStart(2, '0');
+    document.getElementById('timer-display').textContent = m + ':' + s;
+  }
+
+  // ===== 영구 저장 (localStorage) =====
+  const STORAGE_KEY = 'tinnitus_logs_v1';
+  const SETTING_KEY = 'tinnitus_settings_v1';
+
+  function loadSaved() {
+    try {
+      const savedLogs = localStorage.getItem(STORAGE_KEY);
+      if (savedLogs) { logs = JSON.parse(savedLogs); renderLog(); }
+      const savedSettings = localStorage.getItem(SETTING_KEY);
+      if (savedSettings) {
+        const s = JSON.parse(savedSettings);
+        [1,2,3].forEach(ch => {
+          if (s['freq'+ch]) {
+            document.getElementById('freq'+ch).value = s['freq'+ch];
+            document.getElementById('fval'+ch).textContent = parseInt(s['freq'+ch]).toLocaleString() + ' Hz';
+          }
+          if (s['vol'+ch]) {
+            document.getElementById('vol'+ch).value = s['vol'+ch];
+            document.getElementById('vpct'+ch).textContent = s['vol'+ch] + '%';
+          }
+        });
+      }
+    } catch(e) {}
+  }
+
+  function saveSettings() {
+    try {
+      const s = {};
+      [1,2,3].forEach(ch => {
+        s['freq'+ch] = document.getElementById('freq'+ch).value;
+        s['vol'+ch] = document.getElementById('vol'+ch).value;
+      });
+      localStorage.setItem(SETTING_KEY, JSON.stringify(s));
+    } catch(e) {}
+  }
+
+  function saveLog() {
+    const entry = {
+      freqs: [1,2,3].map(ch => ({
+        ch,
+        hz: parseInt(document.getElementById('freq' + ch).value),
+        vol: document.getElementById('vol' + ch).value,
+        detected: !!detected[ch]
+      })),
+      time: new Date().toLocaleString('ko-KR', {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})
+    };
+    logs.unshift(entry);
+    if (logs.length > 20) logs.pop();
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(logs)); } catch(e) {}
+    renderLog();
+    if (navigator.vibrate) navigator.vibrate(100);
+  }
+
+  function clearLog() {
+    if (confirm('기록을 모두 삭제할까요?')) {
+      logs = [];
+      try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+      renderLog();
+    }
+  }
+
+  function renderLog() {
+    const el = document.getElementById('log-list');
+    if (!logs.length) {
+      el.innerHTML = '<div style="color:#444;font-size:0.8em;text-align:center;padding:8px">저장된 기록 없음</div>';
+      return;
+    }
+    el.innerHTML = logs.map(l =>
+      `<div class="log-item">
+        <div class="log-freqs">
+          <span style="color:#a78bfa">${l.freqs[0].detected?'🎯':''}①${l.freqs[0].hz.toLocaleString()}</span>
+          <span style="color:#38bdf8">${l.freqs[1].detected?'🎯':''}②${l.freqs[1].hz.toLocaleString()}</span>
+          <span style="color:#34d399">${l.freqs[2].detected?'🎯':''}③${l.freqs[2].hz.toLocaleString()}</span>
+        </div>
+        <span class="log-time">${l.time}</span>
+      </div>`
+    ).join('');
+  }
+
+  // 슬라이더 움직일 때마다 자동 저장
+  [1,2,3].forEach(ch => {
+    document.getElementById('freq'+ch).addEventListener('input', saveSettings);
+    document.getElementById('vol'+ch).addEventListener('input', saveSettings);
+  });
+
+  initWaves();
+  loadSaved();
+</script>
+</body>
+</html>
